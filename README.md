@@ -20,5 +20,5 @@
  </a>
 </p>
 <p align="center">
- <a href="https://retty.io">async-transport</a> is a collection of asynchronous transports, i.e, UDP, TCP, etc.
+ <a href="https://retty.io">async-transport</a> is a collection of asynchronous transports with ECN information.
 </p>

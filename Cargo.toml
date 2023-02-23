@@ -3,7 +3,7 @@ name = "async-transport"
 version = "0.0.0"
 authors = ["Rusty Rain <y@liu.mx>"]
 edition = "2021"
-description = "asynchronous transports, i.e., UDP, TCP, etc."
+description = "Asynchronous transports with ECN information"
 license = "MIT/Apache-2.0"
 documentation = "https://docs.rs/async-transport"
 repository = "https://github.com/retty-io/async-transport"
@@ -12,3 +12,9 @@ keywords = ["networking", "protocols"]
 categories = [ "network-programming", "asynchronous" ]
 
 [dependencies]
+libc = "0.2.69"
+socket2 = "0.4"
+tracing = "0.1.10"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.45.0", features = ["Win32_Networking_WinSock"] }
