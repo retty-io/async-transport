@@ -20,7 +20,6 @@ runtime-async-std = ["async-io", "async-std"]
 libc = "0.2.69"
 socket2 = "0.4"
 tracing = "0.1.10"
-#futures-lite = "1.11.3"
 async-io = { version = "1.6", optional = true }
 async-std = { version = "1.11", optional = true }
 tokio = { version = "1.13.0", features = ["net"] }

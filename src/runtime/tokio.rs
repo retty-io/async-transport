@@ -1,10 +1,12 @@
 use crate::runtime::AsyncUdpSocket;
 use crate::{RecvMeta, Transmit, UdpSocketState, UdpState};
 use std::{
+    future::poll_fn,
     io,
+    net::SocketAddr,
     task::{Context, Poll},
 };
-use tokio::io::Interest;
+use tokio::{io::Interest, net::ToSocketAddrs};
 
 #[derive(Debug)]
 struct UdpSocket {
@@ -15,8 +17,8 @@ struct UdpSocket {
 impl AsyncUdpSocket for UdpSocket {
     fn poll_send(
         &mut self,
-        state: &UdpState,
         cx: &mut Context<'_>,
+        state: &UdpState,
         transmits: &[Transmit],
     ) -> Poll<io::Result<usize>> {
         let inner = &mut self.inner;
@@ -34,7 +36,7 @@ impl AsyncUdpSocket for UdpSocket {
     fn poll_recv(
         &self,
         cx: &mut Context<'_>,
-        bufs: &mut [std::io::IoSliceMut<'_>],
+        bufs: &mut [io::IoSliceMut<'_>],
         meta: &mut [RecvMeta],
     ) -> Poll<io::Result<usize>> {
         loop {
@@ -47,7 +49,41 @@ impl AsyncUdpSocket for UdpSocket {
         }
     }
 
-    fn local_addr(&self) -> io::Result<std::net::SocketAddr> {
+    fn local_addr(&self) -> io::Result<SocketAddr> {
         self.io.local_addr()
+    }
+}
+
+impl UdpSocket {
+    pub async fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+        let socket = tokio::net::UdpSocket::bind(addr).await?;
+        Ok(Self {
+            io: socket,
+            inner: UdpSocketState::new(),
+        })
+    }
+
+    pub async fn connect<A: ToSocketAddrs>(&self, addr: A) -> io::Result<()> {
+        self.io.connect(addr).await
+    }
+
+    pub async fn send_to<A: ToSocketAddrs>(&self, buf: &[u8], target: A) -> io::Result<usize> {
+        self.io.send_to(buf, target).await
+    }
+
+    pub async fn recv_from(&self, buf: &mut [u8]) -> io::Result<(usize, SocketAddr)> {
+        self.io.recv_from(buf).await
+    }
+
+    pub async fn send(&mut self, state: &UdpState, transmits: &[Transmit]) -> io::Result<usize> {
+        poll_fn(|cx| self.poll_send(cx, state, transmits)).await
+    }
+
+    pub async fn recv(
+        &self,
+        bufs: &mut [io::IoSliceMut<'_>],
+        meta: &mut [RecvMeta],
+    ) -> io::Result<usize> {
+        poll_fn(|cx| self.poll_recv(cx, bufs, meta)).await
     }
 }

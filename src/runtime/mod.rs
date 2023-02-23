@@ -18,8 +18,8 @@ pub trait AsyncUdpSocket: Send + Debug + 'static {
     /// future
     fn poll_send(
         &mut self,
-        state: &UdpState,
         cx: &mut Context<'_>,
+        state: &UdpState,
         transmits: &[Transmit],
     ) -> Poll<Result<usize, io::Error>>;
 
