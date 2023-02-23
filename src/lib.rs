@@ -43,9 +43,15 @@ mod imp;
 mod proto;
 mod runtime;
 
-pub use proto::{EcnCodepoint, Transmit};
-
 pub use imp::UdpSocketState;
+pub use proto::{EcnCodepoint, Transmit};
+pub use runtime::AsyncUdpSocket;
+
+#[cfg(feature = "runtime-async-std")]
+pub use runtime::UdpSocket;
+
+#[cfg(feature = "runtime-tokio")]
+pub use runtime::UdpSocket;
 
 /// Number of UDP packets to send/receive at a time
 pub const BATCH_SIZE: usize = imp::BATCH_SIZE;

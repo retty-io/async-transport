@@ -8,9 +8,13 @@ use std::{
 
 #[cfg(feature = "runtime-async-std")]
 mod async_std;
+#[cfg(feature = "runtime-async-std")]
+pub use self::async_std::UdpSocket;
 
 #[cfg(feature = "runtime-tokio")]
 mod tokio;
+#[cfg(feature = "runtime-tokio")]
+pub use self::tokio::UdpSocket;
 
 /// Abstract implementation of a UDP socket for runtime independence
 pub trait AsyncUdpSocket: Send + Debug + 'static {

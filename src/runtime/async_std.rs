@@ -10,7 +10,7 @@ use std::{
 };
 
 #[derive(Debug)]
-struct UdpSocket {
+pub struct UdpSocket {
     io: Async<std::net::UdpSocket>,
     inner: UdpSocketState,
 }

@@ -9,7 +9,7 @@ use std::{
 use tokio::{io::Interest, net::ToSocketAddrs};
 
 #[derive(Debug)]
-struct UdpSocket {
+pub struct UdpSocket {
     io: tokio::net::UdpSocket,
     inner: UdpSocketState,
 }
