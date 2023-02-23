@@ -1,4 +1,18 @@
 //! Uniform interface to send/recv UDP packets with ECN information.
+
+#![warn(rust_2018_idioms)]
+#![allow(dead_code)]
+//#![warn(missing_docs)]
+
+macro_rules! ready {
+    ($e:expr $(,)?) => {
+        match $e {
+            std::task::Poll::Ready(t) => t,
+            std::task::Poll::Pending => return std::task::Poll::Pending,
+        }
+    };
+}
+
 #[cfg(unix)]
 use std::os::unix::io::AsRawFd;
 #[cfg(windows)]
@@ -27,6 +41,7 @@ mod imp;
 mod imp;
 
 mod proto;
+mod runtime;
 
 pub use proto::{EcnCodepoint, Transmit};
 

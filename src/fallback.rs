@@ -3,9 +3,7 @@ use std::{
     time::Instant,
 };
 
-use proto::Transmit;
-
-use super::{log_sendmsg_error, RecvMeta, UdpSockRef, UdpState, IO_ERROR_LOG_INTERVAL};
+use super::{log_sendmsg_error, RecvMeta, Transmit, UdpSockRef, UdpState, IO_ERROR_LOG_INTERVAL};
 
 /// Fallback UDP socket interface that stubs out all special functionality
 ///

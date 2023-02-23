@@ -442,14 +442,14 @@ fn prepare_msg(
 }
 
 fn prepare_recv(
-    buf: &mut IoSliceMut,
+    buf: &mut IoSliceMut<'_>,
     name: &mut MaybeUninit<libc::sockaddr_storage>,
     ctrl: &mut cmsg::Aligned<MaybeUninit<[u8; CMSG_LEN]>>,
     hdr: &mut libc::msghdr,
 ) {
     hdr.msg_name = name.as_mut_ptr() as _;
     hdr.msg_namelen = mem::size_of::<libc::sockaddr_storage>() as _;
-    hdr.msg_iov = buf as *mut IoSliceMut as *mut libc::iovec;
+    hdr.msg_iov = buf as *mut IoSliceMut<'_> as *mut libc::iovec;
     hdr.msg_iovlen = 1;
     hdr.msg_control = ctrl.0.as_mut_ptr() as _;
     hdr.msg_controllen = CMSG_LEN as _;
@@ -574,7 +574,7 @@ mod gso {
         }
     }
 
-    pub fn set_segment_size(encoder: &mut cmsg::Encoder, segment_size: u16) {
+    pub fn set_segment_size(encoder: &mut cmsg::Encoder<'_>, segment_size: u16) {
         encoder.push(libc::SOL_UDP, libc::UDP_SEGMENT, segment_size);
     }
 }
