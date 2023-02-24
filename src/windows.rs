@@ -2,6 +2,7 @@ use std::{
     io::{self, IoSliceMut},
     mem,
     os::windows::io::AsRawSocket,
+    sync::atomic::AtomicU64,
     time::Instant,
 };
 
@@ -12,14 +13,16 @@ use super::{log_sendmsg_error, RecvMeta, Transmit, UdpSockRef, UdpState, IO_ERRO
 /// QUIC-friendly UDP interface for Windows
 #[derive(Debug)]
 pub struct UdpSocketState {
-    last_send_error: Instant,
+    epoch: Instant,
+    last_send_error: AtomicU64,
 }
 
 impl UdpSocketState {
     pub fn new() -> Self {
         let now = Instant::now();
         Self {
-            last_send_error: now.checked_sub(2 * IO_ERROR_LOG_INTERVAL).unwrap_or(now),
+            epoch: now.checked_sub(2 * IO_ERROR_LOG_INTERVAL).unwrap_or(now),
+            last_send_error: AtomicU64::new(0),
         }
     }
 
@@ -80,7 +83,7 @@ impl UdpSocketState {
     }
 
     pub fn send(
-        &mut self,
+        &self,
         socket: UdpSockRef<'_>,
         _state: &UdpState,
         transmits: &[Transmit],
@@ -105,7 +108,7 @@ impl UdpSocketState {
 
                     // Other errors are ignored, since they will ususally be handled
                     // by higher level retransmits and timeouts.
-                    log_sendmsg_error(&mut self.last_send_error, e, transmit);
+                    log_sendmsg_error(&self.epoch, &self.last_send_error, e, transmit);
                     sent += 1;
                 }
             }

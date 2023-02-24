@@ -1,13 +1,12 @@
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
 use std::ptr;
-use std::sync::atomic::AtomicU64;
 use std::{
     io,
     io::IoSliceMut,
     mem::{self, MaybeUninit},
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
     os::unix::io::AsRawFd,
-    sync::atomic::AtomicUsize,
+    sync::atomic::{AtomicU64, AtomicUsize},
     time::Instant,
 };
 
@@ -255,7 +254,8 @@ fn send(
 fn send(
     _state: &UdpState,
     io: SockRef<'_>,
-    last_send_error: &mut Instant,
+    epoch: &Instant,
+    last_send_error: &AtomicU64,
     transmits: &[Transmit],
 ) -> io::Result<usize> {
     let mut hdr: libc::msghdr = unsafe { mem::zeroed() };
@@ -290,7 +290,7 @@ fn send(
                     //   Those are not fatal errors, since the
                     //   configuration can be dynamically changed.
                     // - Destination unreachable errors have been observed for other
-                    log_sendmsg_error(last_send_error, e, &transmits[sent]);
+                    log_sendmsg_error(epoch, last_send_error, e, &transmits[sent]);
                     sent += 1;
                 }
             }
@@ -597,7 +597,7 @@ mod gso {
         1
     }
 
-    pub fn set_segment_size(_encoder: &mut cmsg::Encoder, _segment_size: u16) {
+    pub fn set_segment_size(_encoder: &mut cmsg::Encoder<'_>, _segment_size: u16) {
         panic!("Setting a segment size is not supported on current platform");
     }
 }
