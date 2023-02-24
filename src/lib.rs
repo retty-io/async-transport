@@ -17,6 +17,7 @@ macro_rules! ready {
 use std::os::unix::io::AsRawFd;
 #[cfg(windows)]
 use std::os::windows::io::AsRawSocket;
+use std::sync::atomic::AtomicU64;
 use std::{
     net::{IpAddr, Ipv6Addr, SocketAddr},
     sync::atomic::{AtomicUsize, Ordering},
@@ -125,13 +126,17 @@ const IO_ERROR_LOG_INTERVAL: Duration = std::time::Duration::from_secs(60);
 /// Logging will only be performed if at least [`IO_ERROR_LOG_INTERVAL`]
 /// has elapsed since the last error was logged.
 fn log_sendmsg_error(
-    last_send_error: &mut Instant,
+    epoch: &Instant,
+    last_send_error: &AtomicU64,
     err: impl core::fmt::Debug,
     transmit: &Transmit,
 ) {
+    let d = last_send_error.load(Ordering::Relaxed);
+    let last = epoch.checked_add(Duration::from_nanos(d)).unwrap();
     let now = Instant::now();
-    if now.saturating_duration_since(*last_send_error) > IO_ERROR_LOG_INTERVAL {
-        *last_send_error = now;
+    let interval = now.saturating_duration_since(last);
+    if interval > IO_ERROR_LOG_INTERVAL {
+        last_send_error.store(interval.as_nanos() as u64, Ordering::Relaxed);
         warn!(
         "sendmsg error: {:?}, Transmit: {{ destination: {:?}, src_ip: {:?}, enc: {:?}, len: {:?}, segment_size: {:?} }}",
             err, transmit.destination, transmit.src_ip, transmit.ecn, transmit.contents.len(), transmit.segment_size);

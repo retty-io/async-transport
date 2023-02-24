@@ -21,7 +21,7 @@ pub trait AsyncUdpSocket: Send + Debug + 'static {
     /// Send UDP datagrams from `transmits`, or register to be woken if sending may succeed in the
     /// future
     fn poll_send(
-        &mut self,
+        &self,
         cx: &mut Context<'_>,
         state: &UdpState,
         transmits: &[Transmit],

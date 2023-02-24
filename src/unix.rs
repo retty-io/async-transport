@@ -1,5 +1,6 @@
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
 use std::ptr;
+use std::sync::atomic::AtomicU64;
 use std::{
     io,
     io::IoSliceMut,
@@ -28,14 +29,16 @@ type IpTosTy = libc::c_int;
 /// platforms.
 #[derive(Debug)]
 pub struct UdpSocketState {
-    last_send_error: Instant,
+    epoch: Instant,
+    last_send_error: AtomicU64,
 }
 
 impl UdpSocketState {
     pub fn new() -> Self {
         let now = Instant::now();
         Self {
-            last_send_error: now.checked_sub(2 * IO_ERROR_LOG_INTERVAL).unwrap_or(now),
+            epoch: now.checked_sub(2 * IO_ERROR_LOG_INTERVAL).unwrap_or(now),
+            last_send_error: AtomicU64::new(0),
         }
     }
 
@@ -44,12 +47,18 @@ impl UdpSocketState {
     }
 
     pub fn send(
-        &mut self,
+        &self,
         socket: UdpSockRef<'_>,
         state: &UdpState,
         transmits: &[Transmit],
     ) -> Result<usize, io::Error> {
-        send(state, socket.0, &mut self.last_send_error, transmits)
+        send(
+            state,
+            socket.0,
+            &self.epoch,
+            &self.last_send_error,
+            transmits,
+        )
     }
 
     pub fn recv(
@@ -150,7 +159,8 @@ fn send(
     #[allow(unused_variables)] // only used on Linux
     state: &UdpState,
     io: SockRef<'_>,
-    last_send_error: &mut Instant,
+    epoch: &Instant,
+    last_send_error: &AtomicU64,
     transmits: &[Transmit],
 ) -> io::Result<usize> {
     #[allow(unused_mut)] // only mutable on FeeBSD
@@ -221,13 +231,13 @@ fn send(
                         }
                     }
 
-                    // Other errors are ignored, since they will ususally be handled
+                    // Other errors are ignored, since they will usually be handled
                     // by higher level retransmits and timeouts.
                     // - PermissionDenied errors have been observed due to iptable rules.
                     //   Those are not fatal errors, since the
                     //   configuration can be dynamically changed.
                     // - Destination unreachable errors have been observed for other
-                    log_sendmsg_error(last_send_error, e, &transmits[0]);
+                    log_sendmsg_error(epoch, last_send_error, e, &transmits[0]);
 
                     // The ERRORS section in https://man7.org/linux/man-pages/man2/sendmmsg.2.html
                     // describes that errors will only be returned if no message could be transmitted

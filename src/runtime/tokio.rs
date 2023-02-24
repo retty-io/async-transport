@@ -16,12 +16,12 @@ pub struct UdpSocket {
 
 impl AsyncUdpSocket for UdpSocket {
     fn poll_send(
-        &mut self,
+        &self,
         cx: &mut Context<'_>,
         state: &UdpState,
         transmits: &[Transmit],
     ) -> Poll<io::Result<usize>> {
-        let inner = &mut self.inner;
+        let inner = &self.inner;
         let io = &self.io;
         loop {
             ready!(io.poll_send_ready(cx))?;
@@ -75,7 +75,7 @@ impl UdpSocket {
         self.io.recv_from(buf).await
     }
 
-    pub async fn send(&mut self, state: &UdpState, transmits: &[Transmit]) -> io::Result<usize> {
+    pub async fn send(&self, state: &UdpState, transmits: &[Transmit]) -> io::Result<usize> {
         poll_fn(|cx| self.poll_send(cx, state, transmits)).await
     }
 
