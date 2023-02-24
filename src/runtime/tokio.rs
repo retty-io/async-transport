@@ -52,6 +52,10 @@ impl AsyncUdpSocket for UdpSocket {
     fn local_addr(&self) -> io::Result<SocketAddr> {
         self.io.local_addr()
     }
+
+    fn peer_addr(&self) -> io::Result<SocketAddr> {
+        self.io.peer_addr()
+    }
 }
 
 impl UdpSocket {

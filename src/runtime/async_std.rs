@@ -44,8 +44,12 @@ impl AsyncUdpSocket for UdpSocket {
         }
     }
 
-    fn local_addr(&self) -> io::Result<std::net::SocketAddr> {
+    fn local_addr(&self) -> io::Result<SocketAddr> {
         self.io.as_ref().local_addr()
+    }
+
+    fn peer_addr(&self) -> io::Result<SocketAddr> {
+        self.io.as_ref().peer_addr()
     }
 }
 

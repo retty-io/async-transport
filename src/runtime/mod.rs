@@ -37,4 +37,7 @@ pub trait AsyncUdpSocket: Send + Debug + 'static {
 
     /// Look up the local IP address and port used by this socket
     fn local_addr(&self) -> io::Result<SocketAddr>;
+
+    /// Look up the peer IP address and port used by this socket
+    fn peer_addr(&self) -> io::Result<SocketAddr>;
 }
