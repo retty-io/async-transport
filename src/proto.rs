@@ -2,7 +2,7 @@ use std::net::{IpAddr, SocketAddr};
 
 /// Explicit congestion notification codepoint
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum EcnCodepoint {
     #[doc(hidden)]
     Ect0 = 0b10,
