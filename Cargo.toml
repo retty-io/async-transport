@@ -26,3 +26,13 @@ tokio = { version = "1.25.0", features = ["net"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.45.0", features = ["Win32_Networking_WinSock"] }
+
+[dev-dependencies]
+tokio = { version = "1.25.0", features = ["full"] }
+anyhow = "1.0.40"
+env_logger = "0.8.3"
+log = "0.4.14"
+
+[[example]]
+name = "simple"
+path = "examples/simple.rs"
