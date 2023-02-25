@@ -1,4 +1,4 @@
-use crate::{RecvMeta, Transmit, UdpState};
+use crate::{Capabilities, RecvMeta, Transmit};
 use std::{
     fmt::Debug,
     io::{self, IoSliceMut},
@@ -23,7 +23,7 @@ pub trait AsyncUdpSocket: Send + Debug + 'static {
     fn poll_send(
         &self,
         cx: &mut Context<'_>,
-        state: &UdpState,
+        capabilities: &Capabilities,
         transmits: &[Transmit],
     ) -> Poll<Result<usize, io::Error>>;
 

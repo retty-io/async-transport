@@ -1,5 +1,5 @@
 use crate::runtime::AsyncUdpSocket;
-use crate::{RecvMeta, Transmit, UdpSocketState, UdpState};
+use crate::{Capabilities, RecvMeta, Transmit, UdpSocketState};
 use std::{
     future::poll_fn,
     io,
@@ -18,7 +18,7 @@ impl AsyncUdpSocket for UdpSocket {
     fn poll_send(
         &self,
         cx: &mut Context<'_>,
-        state: &UdpState,
+        capabilities: &Capabilities,
         transmits: &[Transmit],
     ) -> Poll<io::Result<usize>> {
         let inner = &self.inner;
@@ -26,7 +26,7 @@ impl AsyncUdpSocket for UdpSocket {
         loop {
             ready!(io.poll_send_ready(cx))?;
             if let Ok(res) = io.try_io(Interest::WRITABLE, || {
-                inner.send(io.into(), state, transmits)
+                inner.send(io.into(), capabilities, transmits)
             }) {
                 return Poll::Ready(Ok(res));
             }
@@ -79,8 +79,12 @@ impl UdpSocket {
         self.io.recv_from(buf).await
     }
 
-    pub async fn send(&self, state: &UdpState, transmits: &[Transmit]) -> io::Result<usize> {
-        poll_fn(|cx| self.poll_send(cx, state, transmits)).await
+    pub async fn send(
+        &self,
+        capabilities: &Capabilities,
+        transmits: &[Transmit],
+    ) -> io::Result<usize> {
+        poll_fn(|cx| self.poll_send(cx, capabilities, transmits)).await
     }
 
     pub async fn recv(

@@ -13,7 +13,7 @@ use std::{
 use socket2::SockRef;
 
 use super::{
-    cmsg, log_sendmsg_error, EcnCodepoint, RecvMeta, Transmit, UdpSockRef, UdpState,
+    cmsg, log_sendmsg_error, Capabilities, EcnCodepoint, RecvMeta, Transmit, UdpSockRef,
     IO_ERROR_LOG_INTERVAL,
 };
 
@@ -48,11 +48,11 @@ impl UdpSocketState {
     pub fn send(
         &self,
         socket: UdpSockRef<'_>,
-        state: &UdpState,
+        capabilities: &Capabilities,
         transmits: &[Transmit],
     ) -> Result<usize, io::Error> {
         send(
-            state,
+            capabilities,
             socket.0,
             &self.epoch,
             &self.last_send_error,
@@ -156,7 +156,7 @@ fn init(io: SockRef<'_>) -> io::Result<()> {
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
 fn send(
     #[allow(unused_variables)] // only used on Linux
-    state: &UdpState,
+    capabilities: &Capabilities,
     io: SockRef<'_>,
     epoch: &Instant,
     last_send_error: &AtomicU64,
@@ -222,9 +222,9 @@ fn send(
                     if e.raw_os_error() == Some(libc::EIO) {
                         // Prevent new transmits from being scheduled using GSO. Existing GSO transmits
                         // may already be in the pipeline, so we need to tolerate additional failures.
-                        if state.max_gso_segments() > 1 {
+                        if capabilities.max_gso_segments() > 1 {
                             tracing::error!("got EIO, halting segmentation offload");
-                            state
+                            capabilities
                                 .max_gso_segments
                                 .store(1, std::sync::atomic::Ordering::Relaxed);
                         }
@@ -252,7 +252,7 @@ fn send(
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 fn send(
-    _state: &UdpState,
+    _capabilities: &Capabilities,
     io: SockRef<'_>,
     epoch: &Instant,
     last_send_error: &AtomicU64,
@@ -365,8 +365,8 @@ fn recv(io: SockRef<'_>, bufs: &mut [IoSliceMut<'_>], meta: &mut [RecvMeta]) -> 
 }
 
 /// Returns the platforms UDP socket capabilities
-pub fn udp_state() -> UdpState {
-    UdpState {
+pub fn capabilities() -> Capabilities {
+    Capabilities {
         max_gso_segments: AtomicUsize::new(gso::max_gso_segments()),
         gro_segments: gro::gro_segments(),
     }

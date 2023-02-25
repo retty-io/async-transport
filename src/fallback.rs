@@ -4,7 +4,9 @@ use std::{
     time::Instant,
 };
 
-use super::{log_sendmsg_error, RecvMeta, Transmit, UdpSockRef, UdpState, IO_ERROR_LOG_INTERVAL};
+use super::{
+    log_sendmsg_error, Capabilities, RecvMeta, Transmit, UdpSockRef, IO_ERROR_LOG_INTERVAL,
+};
 
 /// Fallback UDP socket interface that stubs out all special functionality
 ///
@@ -32,7 +34,7 @@ impl UdpSocketState {
     pub fn send(
         &self,
         socket: UdpSockRef<'_>,
-        _state: &UdpState,
+        _capabilities: &Capabilities,
         transmits: &[Transmit],
     ) -> Result<usize, io::Error> {
         let mut sent = 0;
@@ -99,8 +101,8 @@ impl Default for UdpSocketState {
 }
 
 /// Returns the platforms UDP socket capabilities
-pub fn udp_state() -> super::UdpState {
-    super::UdpState {
+pub fn capabilities() -> super::Capabilities {
+    super::Capabilities {
         max_gso_segments: std::sync::atomic::AtomicUsize::new(1),
         gro_segments: 1,
     }

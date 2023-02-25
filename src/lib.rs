@@ -59,14 +59,14 @@ pub const BATCH_SIZE: usize = imp::BATCH_SIZE;
 
 /// The capabilities a UDP socket supports on a certain platform
 #[derive(Debug)]
-pub struct UdpState {
+pub struct Capabilities {
     max_gso_segments: AtomicUsize,
     gro_segments: usize,
 }
 
-impl UdpState {
+impl Capabilities {
     pub fn new() -> Self {
-        imp::udp_state()
+        imp::capabilities()
     }
 
     /// The maximum amount of segments which can be transmitted if a platform
@@ -89,7 +89,7 @@ impl UdpState {
     }
 }
 
-impl Default for UdpState {
+impl Default for Capabilities {
     fn default() -> Self {
         Self::new()
     }
