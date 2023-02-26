@@ -1,6 +1,6 @@
 [package]
 name = "async-transport"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Rusty Rain <y@liu.mx>"]
 edition = "2021"
 description = "Asynchronous transports with ECN information"
