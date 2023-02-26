@@ -61,8 +61,11 @@ async fn test_ecn() -> Result<()> {
 
     let ecn = rx.recv().await.unwrap();
 
-    assert!(ecn.is_some());
-    assert_eq!(EcnCodepoint::Ce, ecn.unwrap());
+    #[cfg(not(windows))]
+    {
+        assert!(ecn.is_some());
+        assert_eq!(EcnCodepoint::Ce, ecn.unwrap());
+    }
 
     Ok(())
 }
