@@ -6,6 +6,9 @@
  <a href="https://github.com/retty-io/async-transport/actions"> 
   <img src="https://github.com/retty-io/async-transport/workflows/cargo/badge.svg">
  </a>
+ <a href="https://codecov.io/gh/retty-io/async-transport"> 
+  <img src="https://codecov.io/gh/retty-io/async-transport/branch/master/graph/badge.svg">
+ </a>
  <a href="https://deps.rs/repo/github/retty-io/async-transport"> 
   <img src="https://deps.rs/repo/github/retty-io/async-transport/status.svg">
  </a>
