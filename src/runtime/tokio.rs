@@ -61,6 +61,7 @@ impl AsyncUdpSocket for UdpSocket {
 impl UdpSocket {
     pub async fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
         let socket = tokio::net::UdpSocket::bind(addr).await?;
+        UdpSocketState::configure((&socket).into())?;
         Ok(Self {
             io: socket,
             inner: UdpSocketState::new(),

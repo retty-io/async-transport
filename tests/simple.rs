@@ -6,12 +6,12 @@ use std::io::IoSliceMut;
 use std::net::Ipv4Addr;
 use std::time::Instant;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+#[tokio::test]
+async fn test_ecn() -> Result<()> {
     env_logger::init();
     let capabilities = Capabilities::new();
-    let socket1 = UdpSocket::bind("0.0.0.0:0").await?;
-    let socket2 = UdpSocket::bind("0.0.0.0:0").await?;
+    let socket1 = UdpSocket::bind("127.0.0.1:0").await?;
+    let socket2 = UdpSocket::bind("127.0.0.1:0").await?;
     let addr2 = socket2.local_addr()?;
 
     let mut transmits = Vec::with_capacity(1);
@@ -48,18 +48,21 @@ async fn main() -> Result<()> {
                 &meta[i]
             );
         }
-        let _ = tx.send(()).await;
+        let _ = tx.send(meta[0].ecn).await;
     });
 
     let start = Instant::now();
 
     log::debug!("before send");
-    socket1.send(&capabilities, &transmits).await.unwrap();
+    socket1.send(&capabilities, &transmits).await?;
     log::debug!("after send");
 
     println!("sent {} packets in {}ms", 1, start.elapsed().as_millis());
 
-    let _ = rx.recv().await;
+    let ecn = rx.recv().await.unwrap();
+
+    assert!(ecn.is_some());
+    assert_eq!(EcnCodepoint::Ce, ecn.unwrap());
 
     Ok(())
 }

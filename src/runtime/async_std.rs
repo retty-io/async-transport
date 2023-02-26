@@ -61,6 +61,7 @@ impl UdpSocket {
         for addr in addrs {
             match Async::<std::net::UdpSocket>::bind(addr) {
                 Ok(socket) => {
+                    UdpSocketState::configure((&socket).into())?;
                     return Ok(Self {
                         io: socket,
                         inner: UdpSocketState::new(),
