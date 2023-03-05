@@ -1,4 +1,6 @@
+#[cfg(not(feature = "metal-io"))]
 use crate::{Capabilities, RecvMeta, Transmit};
+#[cfg(not(feature = "metal-io"))]
 use std::{
     fmt::Debug,
     io::{self, IoSliceMut},
