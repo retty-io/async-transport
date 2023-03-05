@@ -16,6 +16,12 @@ mod tokio;
 #[cfg(feature = "runtime-tokio")]
 pub use self::tokio::UdpSocket;
 
+#[cfg(feature = "metal-io")]
+mod metal_io;
+#[cfg(feature = "metal-io")]
+pub use self::metal_io::UdpSocket;
+
+#[cfg(not(feature = "metal-io"))]
 /// Abstract implementation of a UDP socket for runtime independence
 pub trait AsyncUdpSocket: Send + Debug + 'static {
     /// Send UDP datagrams from `transmits`, or register to be woken if sending may succeed in the

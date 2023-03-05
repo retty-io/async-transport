@@ -47,12 +47,8 @@ mod runtime;
 
 pub use imp::UdpSocketState;
 pub use proto::{EcnCodepoint, Transmit};
+#[cfg(not(feature = "metal-io"))]
 pub use runtime::AsyncUdpSocket;
-
-#[cfg(feature = "runtime-async-std")]
-pub use runtime::UdpSocket;
-
-#[cfg(feature = "runtime-tokio")]
 pub use runtime::UdpSocket;
 
 /// Number of UDP packets to send/receive at a time
