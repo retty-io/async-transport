@@ -3,6 +3,7 @@
 mod tests {
     use anyhow::Result;
     use async_transport::{Capabilities, EcnCodepoint, RecvMeta, Transmit, UdpSocket, BATCH_SIZE};
+    use mio::{Events, Poll, PollOpt, Ready, Token};
     use std::io::IoSliceMut;
     use std::net::Ipv4Addr;
     use std::thread;
@@ -41,16 +42,32 @@ mod tests {
             }
 
             let mut meta = [RecvMeta::default(); BATCH_SIZE];
-            let n = socket2.recv(&mut buffers, &mut meta).unwrap();
-            for i in 0..n {
-                println!(
-                    "received {} {:?} {:?}",
-                    i,
-                    &buffers[i][..meta[i].len],
-                    &meta[i]
-                );
+
+            const SOCKET_RD: Token = Token(0);
+            let poll = Poll::new()?;
+            let mut events = Events::with_capacity(2);
+            poll.register(&socket2, SOCKET_RD, Ready::readable(), PollOpt::edge())?;
+            poll.poll(&mut events, None)?;
+            for event in events.iter() {
+                match event.token() {
+                    SOCKET_RD => {
+                        let n = socket2.recv(&mut buffers, &mut meta)?;
+                        for i in 0..n {
+                            println!(
+                                "received {} {:?} {:?}",
+                                i,
+                                &buffers[i][..meta[i].len],
+                                &meta[i]
+                            );
+                        }
+                    }
+                    _ => unreachable!(),
+                }
             }
+
             let _ = tx.send(meta[0].ecn);
+
+            Ok::<(), std::io::Error>(())
         });
 
         let start = Instant::now();
