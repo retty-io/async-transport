@@ -1,6 +1,5 @@
 use crate::{Capabilities, RecvMeta, Transmit, UdpSocketState};
-use lazycell::AtomicLazyCell;
-use retty_io::{Evented, Poll, PollOpt, Ready, Token};
+use retty_io::{lazycell::AtomicLazyCell, Evented, Poll, PollOpt, Ready, Token};
 use std::{
     io,
     net::{SocketAddr, ToSocketAddrs},
