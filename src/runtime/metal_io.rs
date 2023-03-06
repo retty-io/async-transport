@@ -1,6 +1,6 @@
 use crate::{Capabilities, RecvMeta, Transmit, UdpSocketState};
 use lazycell::AtomicLazyCell;
-use mio::{Evented, Poll, PollOpt, Ready, Token};
+use retty_io::{Evented, Poll, PollOpt, Ready, Token};
 use std::{
     io,
     net::{SocketAddr, ToSocketAddrs},
@@ -8,7 +8,7 @@ use std::{
 
 #[derive(Debug)]
 pub struct UdpSocket {
-    io: mio::net::UdpSocket,
+    io: retty_io::net::UdpSocket,
     inner: UdpSocketState,
     peer: AtomicLazyCell<SocketAddr>,
 }
@@ -45,7 +45,7 @@ impl UdpSocket {
         let addrs = addrs.to_socket_addrs()?;
 
         for addr in addrs {
-            match mio::net::UdpSocket::bind(&addr) {
+            match retty_io::net::UdpSocket::bind(&addr) {
                 Ok(socket) => {
                     UdpSocketState::configure((&socket).into())?;
                     return Ok(Self {
@@ -71,7 +71,6 @@ impl UdpSocket {
         let addrs = addrs.to_socket_addrs()?;
 
         for addr in addrs {
-            // TODO(stjepang): connect on the blocking pool
             match self.io.connect(addr) {
                 Ok(()) => {
                     self.peer.fill(addr).map_err(|_| {
@@ -109,7 +108,38 @@ impl UdpSocket {
         self.io.recv_from(buf)
     }
 
-    pub fn send(&self, capabilities: &Capabilities, transmits: &[Transmit]) -> io::Result<usize> {
+    pub fn send(
+        &self,
+        #[allow(unused_variables)] capabilities: &Capabilities,
+        transmits: &[Transmit],
+    ) -> io::Result<usize> {
+        #[cfg(windows)]
+        {
+            let mut sent = 0;
+            for transmit in transmits {
+                match self.io.send_to(&transmit.contents, &transmit.destination) {
+                    Ok(_) => {
+                        sent += 1;
+                    }
+                    // We need to report that some packets were sent in this case, so we rely on
+                    // errors being either harmlessly transient (in the case of WouldBlock) or
+                    // recurring on the next call.
+                    Err(_) if sent != 0 => return Ok(sent),
+                    Err(e) => {
+                        if e.kind() == io::ErrorKind::WouldBlock {
+                            return Err(e);
+                        }
+
+                        // Other errors are ignored, since they will ususally be handled
+                        // by higher level retransmits and timeouts.
+                        //log_sendmsg_error(&self.epoch, &self.last_send_error, e, transmit);
+                        sent += 1;
+                    }
+                }
+            }
+            Ok(sent)
+        }
+        #[cfg(not(windows))]
         self.inner.send((&self.io).into(), capabilities, transmits)
     }
 
@@ -118,6 +148,19 @@ impl UdpSocket {
         bufs: &mut [io::IoSliceMut<'_>],
         meta: &mut [RecvMeta],
     ) -> io::Result<usize> {
+        #[cfg(windows)]
+        {
+            let (len, addr) = self.io.recv_from(&mut bufs[0])?;
+            meta[0] = RecvMeta {
+                len,
+                stride: len,
+                addr,
+                ecn: None,
+                dst_ip: None,
+            };
+            Ok(1)
+        }
+        #[cfg(not(windows))]
         self.inner.recv((&self.io).into(), bufs, meta)
     }
 
