@@ -1,7 +1,7 @@
 use crate::runtime::AsyncUdpSocket;
 use crate::{Capabilities, RecvMeta, Transmit, UdpSocketState};
 use async_io::Async;
-use async_std::net::ToSocketAddrs;
+use smol::net::AsyncToSocketAddrs;
 use std::{
     future::poll_fn,
     io,
@@ -54,7 +54,7 @@ impl AsyncUdpSocket for UdpSocket {
 }
 
 impl UdpSocket {
-    pub async fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+    pub async fn bind<A: AsyncToSocketAddrs>(addr: A) -> io::Result<Self> {
         let mut last_err = None;
 
         for addr in addr.to_socket_addrs().await? {
@@ -78,7 +78,7 @@ impl UdpSocket {
         }))
     }
 
-    pub async fn connect<A: ToSocketAddrs>(&self, addr: A) -> io::Result<()> {
+    pub async fn connect<A: AsyncToSocketAddrs>(&self, addr: A) -> io::Result<()> {
         let mut last_err = None;
 
         for addr in addr.to_socket_addrs().await? {
@@ -96,7 +96,7 @@ impl UdpSocket {
         }))
     }
 
-    pub async fn send_to<A: ToSocketAddrs>(&self, buf: &[u8], addr: A) -> io::Result<usize> {
+    pub async fn send_to<A: AsyncToSocketAddrs>(&self, buf: &[u8], addr: A) -> io::Result<usize> {
         let addr = match addr.to_socket_addrs().await?.next() {
             Some(addr) => addr,
             None => {

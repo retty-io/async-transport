@@ -8,6 +8,11 @@ use std::{
     task::{Context, Poll},
 };
 
+#[cfg(feature = "runtime-smol")]
+mod smol;
+#[cfg(feature = "runtime-smol")]
+pub use self::smol::UdpSocket;
+
 #[cfg(feature = "runtime-async-std")]
 mod async_std;
 #[cfg(feature = "runtime-async-std")]
