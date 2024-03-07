@@ -150,7 +150,7 @@ pub struct UdpSockRef<'a>(socket2::SockRef<'a>);
 #[cfg(unix)]
 impl<'s, S> From<&'s S> for UdpSockRef<'s>
 where
-    S: AsRawFd,
+    S: AsRawFd + std::os::fd::AsFd,
 {
     fn from(socket: &'s S) -> Self {
         Self(socket.into())
@@ -160,7 +160,7 @@ where
 #[cfg(windows)]
 impl<'s, S> From<&'s S> for UdpSockRef<'s>
 where
-    S: AsRawSocket,
+    S: AsRawSocket + std::os::windows::io::AsSocket,
 {
     fn from(socket: &'s S) -> Self {
         Self(socket.into())
